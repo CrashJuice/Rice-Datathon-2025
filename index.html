@@ -7,7 +7,8 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
     <style>
-        #map { height: 90vh; width: 100vw; }
+        #map { height: 90vh; width: 100vw; background-color: rgb(179, 189, 185);}
+        
     </style>
 </head>
 <body>
@@ -17,10 +18,10 @@
     <script>
         // Initialize the map
         var map = L.map('map').setView([37.8, -96], 4);  // Centered on the US
-
+        
         // Add a tile layer (Basemap)
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
+           attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
         // Function to create a smooth color gradient from white to dark red
@@ -29,11 +30,12 @@
 
             // Ensure value is clamped between 0 and 1
             value = Math.max(0, Math.min(1, value));
+            value = Math.sqrt(value); // This makes lower values more distinguishable
 
-            // Convert value (0 to 1) into an RGB gradient from white to dark red
-            let red = Math.round(255 - (255 - 128) * value);  // White (255) to Dark Red (128)
-            let green = Math.round(255 - (255) * value);      // White (255) to 0
-            let blue = Math.round(255 - (255) * value);       // White (255) to 0
+                // Convert value (0 to 1) into an RGB gradient from white to bright red
+            let red = 255;  // Always fully red
+            let green = Math.round(255 - (255 * value)); // White (255) to 0
+            let blue = Math.round(255 - (255 * value));  // White (255) to 0
 
             return `rgb(${red}, ${green}, ${blue})`; // Returns a smooth red gradient
         }
