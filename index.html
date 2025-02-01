@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>US Counties Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <style>
+        #map { height: 90vh; width: 100vw; }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <script>
+        // Initialize the map
+        var map = L.map('map').setView([37.8, -96], 4);  // Centered on the US
+
+        // Add a tile layer (Basemap)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Function to create a smooth color gradient from white to dark red
+        function getColor(value) {
+            if (value === null || value === undefined) return '#FFFFFF'; // Default to white for missing values
+
+            // Ensure value is clamped between 0 and 1
+            value = Math.max(0, Math.min(1, value));
+
+            // Convert value (0 to 1) into an RGB gradient from white to dark red
+            let red = Math.round(255 - (255 - 128) * value);  // White (255) to Dark Red (128)
+            let green = Math.round(255 - (255) * value);      // White (255) to 0
+            let blue = Math.round(255 - (255) * value);       // White (255) to 0
+
+            return `rgb(${red}, ${green}, ${blue})`; // Returns a smooth red gradient
+        }
+
+        // Load the GeoJSON file
+        fetch("us_counties_LILA.geojson")  
+        .then(response => response.json())
+        .then(data => {
+            
+            // Style function
+            function style(feature) {
+                return {
+                    fillColor: getColor(feature.properties.Avg_LILATracts),
+                    weight: 1,
+                    opacity: 1,
+                    color: 'white',
+                    dashArray: '3',
+                    fillOpacity: 0.7
+                };
+            }
+
+            // Hover effect
+            function highlightFeature(e) {
+                var layer = e.target;
+                layer.setStyle({
+                    weight: 3,
+                    color: '#666',
+                    dashArray: '',
+                    fillOpacity: 0.9
+                });
+                layer.bringToFront();
+            }
+
+            function resetHighlight(e) {
+                geojsonLayer.resetStyle(e.target);
+            }
+
+            // Click to show popup
+            function onEachFeature(feature, layer) {
+                layer.on({
+                    mouseover: highlightFeature,
+                    mouseout: resetHighlight
+                });
+                layer.bindPopup(`<b>County:</b> ${feature.properties.NAME} <br> 
+                                 <b>Avg_LILATracts:</b> ${feature.properties.Avg_LILATracts}`);
+            }
+
+            // Add GeoJSON layer
+            var geojsonLayer = L.geoJson(data, {
+                style: style,
+                onEachFeature: onEachFeature
+            }).addTo(map);
+
+        })
+        .catch(error => console.error("Error loading GeoJSON:", error));
+
+    </script>
+</body>
+</html>
