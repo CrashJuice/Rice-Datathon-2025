@@ -27,4 +27,4 @@ for feature in geojson_data["features"]:
 with open(output_file, "w", encoding="utf-8") as file:
     json.dump(geojson_data, file, indent=4)
 
-print("✅ Merging complete! Saved as:", output_file)
+print(" Merging complete Saved as:", output_file)
