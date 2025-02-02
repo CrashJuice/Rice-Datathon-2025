@@ -8,30 +8,45 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
     <style>
-        #map { height: 90vh; width: 100vw; background-color: white; }
+        #map { height: 90vh; width: 100vw; background-color: rgb(0, 0, 0); }
         #controls { 
             position: absolute; 
             top: 10px; 
-            right: 10px;  /* Move it to the right */
+            right: 10px;  
             z-index: 1000; 
             background: rgb(125, 124, 124); 
-            padding: 5px;  /* Add more padding for spacing */
+            padding: 10px;  
             border-radius: 5px; 
-            font-size: 16px;  /* Increase font size */
+            font-size: 16px;  
         }
-        #dataSelect {
-            width: 200px;  /* Increase the width of the dropdown */
-            font-size: 18px;  /* Increase font size of dropdown */
+        select {
+            width: 200px;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        #hoverInfo {
+            position: absolute; 
+            bottom: 10px; 
+            left: 10px; 
+            background-color: rgba(255, 255, 255, 0.7); 
+            padding: 10px; 
+            border-radius: 5px; 
+            font-size: 16px; 
+            z-index: 1000;
         }
     </style>
 </head>
 <body>
     <div id="controls">
-        <label for="dataSelect">Select Data:</label>
-        <select id="dataSelect"></select>
+        <label for="dataSelect">Select Data 1:</label>
+        <select id="dataSelect"></select><br>
+
+        <label for="secondDataSelect">Select Data 2:</label>
+        <select id="secondDataSelect"></select>
     </div>
     <div id="map"></div>
-    
+    <div id="hoverInfo"></div> <!-- Hover Info Div -->
+
     <script>
         var map = L.map('map').setView([37.8, -96], 4);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -40,87 +55,156 @@
 
         let geojsonLayer;
         let geojsonData;
-        let currentMetric = "Avg_LILATracts";
-        
+        let currentMetric = "";
+        let currentMetric2 = "";
+
         const allowedMetrics = [
             "Avg_LILATracts", "Adult_Diabetes", "PovertyRate", 
             "Grocery_Per_Thousand", "Snap_Authorized_Stores_Count", "Fast_Food_Restaurants_PTH"
         ];
 
-        function getColor(value, min, max) {
-            if (value === null || value === undefined) return '#FFFFFF';
-            let normalized = (value - min) / (max - min); 
+        function getNormalizedValue(value, min, max, metric) {
+            if (value === null || value === undefined) return null;
+            let normalized = (value - min) / (max - min);
             normalized = Math.max(0, Math.min(1, normalized));
-            if (currentMetric === "Avg_LILATracts") {
-        normalized = Math.sqrt(normalized);  // Square root for LILA
-    } else if ( currentMetric === "Adult_Diabetes") {
-        normalized = normalized * normalized;  // Square for Fast Food Restaurants or Diabetes
-    } else if (currentMetric === "Snap_Authorized_Stores_Count" || currentMetric === "Grocery_Per_Thousand"|| currentMetric === "Fast_Food_Restaurants_PTH") {
-        normalized = Math.sqrt(normalized);  // Cube root for Snap Stores or Grocery
-    }
-           // Convert value (0 to 1) into an RGB gradient from white to dark red
-           let red = Math.round(255 - (60) * normalized);  // White (255) to Dark Red (128)
-            let green = Math.round(255 - (255) * normalized);      // White (255) to 0
-            let blue = Math.round(255 - (255) * normalized);       // White (255) to 0
+            
+            if (metric === "Avg_LILATracts") {
+                normalized = Math.sqrt(normalized);
+            } else if (metric === "Adult_Diabetes") {
+                normalized = normalized * normalized;
+            } else if (["Snap_Authorized_Stores_Count", "Grocery_Per_Thousand", "Fast_Food_Restaurants_PTH"].includes(metric)) {
+                normalized = Math.sqrt(normalized);
+            }
+            return normalized;
+        }
 
-            return `rgb(${red}, ${green}, ${blue})`; // Returns a smooth red gradient
+        function getColor(value1, min1, max1, metric1, value2, min2, max2, metric2) {
+            let n1 = value1 !== null ? getNormalizedValue(value1, min1, max1, metric1) : null;
+            let n2 = value2 !== null ? getNormalizedValue(value2, min2, max2, metric2) : null;
+
+            if (n1 === null && n2 === null) return '#FFFFFF';
+            if (n1 === null) n1 = 0;
+            if (n2 === null) n2 = 0;
+            
+            if (metric1 === "Avg_LILATracts") {
+            ;} 
+
+            let red = ((250 - (60 * n1)) + (255 - (255 * n2))) / 2;
+            let green = ((255 - (255 * n1)) + (255 - (255 * n2))) / 2;
+            let blue = ((255 - (255 * n1)) + (250 - (60 * n2))) / 2;
+
+            return `rgb(${Math.round(red)}, ${Math.round(green)}, ${Math.round(blue)})`;
         }
 
         function getMinMax(metric) {
             let values = geojsonData.features.map(f => f.properties[metric]).filter(v => v !== null && v !== undefined);
-            return { min: Math.min(...values), max: Math.max(...values) };
+            return values.length > 0 ? { min: Math.min(...values), max: Math.max(...values) } : { min: 0, max: 1 };
         }
 
         function updateMap() {
-            let { min, max } = getMinMax(currentMetric);
-            geojsonLayer.setStyle(feature => ({
-    fillColor: getColor(feature.properties[currentMetric], min, max),
-    weight: 1, 
-    opacity: 1, // Very low opacity for the outline
-    color: 'white', 
-    dashArray: '3', 
-    fillOpacity: 0.9 // Very low opacity for the fill color
-}));
+            if (!currentMetric && !currentMetric2) return;
+            let minMax1 = currentMetric ? getMinMax(currentMetric) : { min: 0, max: 1 };
+            let minMax2 = currentMetric2 ? getMinMax(currentMetric2) : { min: 0, max: 1 };
 
-            // Update popups to reflect the new metric
-            geojsonLayer.eachLayer(layer => {
-                let feature = layer.feature;
-                layer.bindPopup(`<b>County:</b> ${feature.properties.NAME} <br> <b>${currentMetric}:</b> ${feature.properties[currentMetric]}`);
-            });
+            geojsonLayer.setStyle(feature => ({
+                fillColor: getColor(
+                    feature.properties[currentMetric], minMax1.min, minMax1.max, currentMetric,
+                    feature.properties[currentMetric2], minMax2.min, minMax2.max, currentMetric2
+                ),
+                weight: 1, opacity: 1, color: 'white', dashArray: '3', fillOpacity: 0.8
+            }));
         }
 
-        function createDropdown() {
-            let select = document.getElementById("dataSelect");
+        function createDropdown(id, onChangeHandler) {
+            let select = document.getElementById(id);
+            let defaultOption = document.createElement("option");
+            defaultOption.value = "";
+            defaultOption.textContent = "Select Metric";
+            select.appendChild(defaultOption);
+
             allowedMetrics.forEach(prop => {
                 let option = document.createElement("option");
                 option.value = prop;
                 option.textContent = prop;
                 select.appendChild(option);
             });
-            select.value = currentMetric;
+
             select.addEventListener("change", function() {
-                currentMetric = this.value;
+                onChangeHandler(this.value);
                 updateMap();
             });
+        }
+
+        function handleFirstDropdownChange(value) {
+            currentMetric = value;
+            updateMap();
+        }
+
+        function handleSecondDropdownChange(value) {
+            currentMetric2 = value;
+            updateMap();
         }
 
         fetch("us_counties_slim.geojson")
         .then(response => response.json())
         .then(data => {
             geojsonData = data;
-            let { min, max } = getMinMax(currentMetric);
-
             geojsonLayer = L.geoJson(geojsonData, {
-                style: feature => ({
-                    fillColor: getColor(feature.properties[currentMetric], min, max),
-                    weight: 1, opacity: 1, color: 'white', dashArray: '3', fillOpacity: .9
-                }),
-                onEachFeature: (feature, layer) => {
-                    layer.bindPopup(`<b>County:</b> ${feature.properties.NAME} <br> <b>${currentMetric}:</b> ${feature.properties[currentMetric]}`);
-                }
-            }).addTo(map);
+    style: feature => {
+        let minMax1 = currentMetric ? getMinMax(currentMetric) : { min: 0, max: 1 };
+        let minMax2 = currentMetric2 ? getMinMax(currentMetric2) : { min: 0, max: 1 };
+
+        return {
+            fillColor: getColor(
+                feature.properties[currentMetric], minMax1.min, minMax1.max, currentMetric,
+                feature.properties[currentMetric2], minMax2.min, minMax2.max, currentMetric2
+            ),
+            weight: 1,
+            opacity: 1,
+            color: 'white',
+            dashArray: '3',
+            fillOpacity: 0.8
+        };
+    },
+    onEachFeature: (feature, layer) => {
+        // Bind the popup content for clicking on the county
+        layer.bindPopup(`<b>County:</b> ${feature.properties.NAME} <br> <b>${currentMetric}:</b> ${feature.properties[currentMetric]} <br> <b>${currentMetric2}:</b> ${feature.properties[currentMetric2]}`);
+
+        // Show the county name and metric values on hover
+        layer.on("mouseover", function(e) {
+            var layer = e.target;
+            layer.setStyle({
+                weight: 3, // highlight the county
+                fillOpacity: 0.9
+            });
+            var info = `<b>County:</b> ${feature.properties.NAME} <br> <b>${currentMetric}:</b> ${feature.properties[currentMetric]} <br> <b>${currentMetric2}:</b> ${feature.properties[currentMetric2]}`;
+            // Display the hover info in a div
+            document.getElementById("hoverInfo").innerHTML = info;
+            // Apply the custom styles to the hover info
+            document.getElementById("hoverInfo").style.fontSize = "18px";  // Larger font size
+            document.getElementById("hoverInfo").style.padding = "15px";  // More padding
+            document.getElementById("hoverInfo").style.border = "3px solid #333";  // Add a border
+            document.getElementById("hoverInfo").style.borderRadius = "10px";  // Rounded corners
+            document.getElementById("hoverInfo").style.backgroundColor = "#f9f9f9";  // Background color
+        });
+
+        // Reset style and remove hover info when mouseout
+        layer.on("mouseout", function(e) {
+            geojsonLayer.resetStyle(e.target); // Just reset the highlight style without recalculating colors
+            document.getElementById("hoverInfo").innerHTML = ''; // Clear hover info
+            // Reset the hover info styling back to default
+            document.getElementById("hoverInfo").style.fontSize = "";  
+            document.getElementById("hoverInfo").style.padding = "";  
+            document.getElementById("hoverInfo").style.border = "";  
+            document.getElementById("hoverInfo").style.borderRadius = "";  
+            document.getElementById("hoverInfo").style.backgroundColor = "";  
+        });
+    }
+}).addTo(map);
+
             
-            createDropdown();
+            createDropdown("dataSelect", handleFirstDropdownChange);
+            createDropdown("secondDataSelect", handleSecondDropdownChange);
         })
         .catch(error => console.error("Error loading GeoJSON:", error));
     </script>
