@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
     <style>
-        #map { height: 90vh; width: 100vw; background-color: rgb(0, 0, 0); }
+        #map { height: 90vh; width: 90vw; background-color: rgb(0, 0, 0); }
         #controls { 
             position: absolute; 
             top: 10px; 
@@ -34,6 +34,43 @@
             font-size: 16px; 
             z-index: 1000;
         }
+
+        /* Key styles */
+        #key {
+    position: absolute;
+    right: 10px; /* Moves the key to the right */
+    top: 50%; /* Centers it vertically */
+    transform: translateY(-50%); /* Ensures the key is exactly in the middle */
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 15px;
+    border-radius: 5px;
+    font-size: 14px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    width: 300px; /* Set a fixed width */
+    word-wrap: break-word; /* Ensure text wraps within the fixed width */
+}
+        
+        #key h3 {
+            margin: 0;
+            font-size: 18px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .metric-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .metric-label {
+            font-weight: bold;
+        }
+        
+        .metric-description {
+            color: #555;
+        }
     </style>
 </head>
 <body>
@@ -43,6 +80,33 @@
 
         <label for="secondDataSelect">Select Data 2:</label>
         <select id="secondDataSelect"></select>
+    </div>
+    <div id="key">
+        <h3>Key</h3>
+        <div class="metric-item">
+            <span class="metric-label">Avg_LILATracts:</span>
+            <span class="metric-description">Represents the percentage of Census tracts in each county that is classified as LILA(Low-Income Low-Access) used by the USDA to define Food Deserts</span>
+        </div>
+        <div class="metric-item">
+            <span class="metric-label">Adult_Diabetes:</span>
+            <span class="metric-description">Percent of Adults in county that have diabetes</span>
+        </div>
+        <div class="metric-item">
+            <span class="metric-label">PovertyRate:</span>
+            <span class="metric-description">Percent of Adults living below the poverty line</span>
+        </div>
+        <div class="metric-item">
+            <span class="metric-label">Grocery_Per_Thousand:</span>
+            <span class="metric-description">Amount of groccery stores per a thousand residents</span>
+        </div>
+        <div class="metric-item">
+            <span class="metric-label">Snap_Authorized_Stores_Count:</span>
+            <span class="metric-description">Amount of stores that are SNAP authorized</span>
+        </div>
+        <div class="metric-item">
+            <span class="metric-label">Fast_Food_Restaurants_PTH:</span>
+            <span class="metric-description">Fast Food resturants per 1 thousand residents</span>
+        </div>
     </div>
     <div id="map"></div>
     <div id="hoverInfo"></div> <!-- Hover Info Div -->
@@ -208,5 +272,7 @@
         })
         .catch(error => console.error("Error loading GeoJSON:", error));
     </script>
+
 </body>
 </html>
+
