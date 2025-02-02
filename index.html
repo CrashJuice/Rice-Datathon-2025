@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>US Counties Map</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
-    <script src="https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
     <style>
         #map { height: 90vh; width: 100vw; background-color: white; }
@@ -84,26 +83,26 @@
                 updateMap();
             });
         }
-        fetch("us_counties_DATA.geojson")
-  .then(response => response.json())
-  .then(data => {
-    // Convert TopoJSON to GeoJSON
-    geojsonData = topojson.feature(data, data.objects.us_counties_DATA);
-    let { min, max } = getMinMax(currentMetric);
 
-    geojsonLayer = L.geoJson(geojsonData, {
-      style: feature => ({
-        fillColor: getColor(feature.properties[currentMetric], min, max),
-        weight: 1, opacity: 1, color: 'white', dashArray: '3', fillOpacity: 0.7
-      }),
-      onEachFeature: (feature, layer) => {
-        layer.bindPopup(`<b>County:</b> ${feature.properties.NAME} <br> <b>${currentMetric}:</b> ${feature.properties[currentMetric]}`);
-      }
-    }).addTo(map);
-    
-    createDropdown();
-  })
-  .catch(error => console.error("Error loading GeoJSON:", error));
+        fetch("us_counties_DATA.geojson")
+        .then(response => response.json())
+        .then(data => {
+            geojsonData = data;
+            let { min, max } = getMinMax(currentMetric);
+
+            geojsonLayer = L.geoJson(geojsonData, {
+                style: feature => ({
+                    fillColor: getColor(feature.properties[currentMetric], min, max),
+                    weight: 1, opacity: 1, color: 'white', dashArray: '3', fillOpacity: 0.7
+                }),
+                onEachFeature: (feature, layer) => {
+                    layer.bindPopup(`<b>County:</b> ${feature.properties.NAME} <br> <b>${currentMetric}:</b> ${feature.properties[currentMetric]}`);
+                }
+            }).addTo(map);
+            
+            createDropdown();
+        })
+        .catch(error => console.error("Error loading GeoJSON:", error));
     </script>
 </body>
 </html>

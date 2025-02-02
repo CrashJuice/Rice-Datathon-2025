@@ -8,6 +8,7 @@ combined_csv_file = "combineddatafinal.csv"  # Additional data CSV
 output_file = "us_counties_slim.geojson"  # Merged output file
 
 # Step 1: Load LILA Data into a Dictionary (FIPS -> Avg_LILATracts)
+columns_to_grab = [3, 4, 5, 9, 11, 12, 13, 14, 15, 16, 19, 20, 21, 23, 26, 28]
 data_dict = {}
 with open(lila_csv_file, mode="r", encoding="utf-8") as file:
     reader = csv.DictReader(file)
@@ -23,8 +24,9 @@ with open(combined_csv_file, mode="r", encoding="utf-8") as file:
         if fips_code not in data_dict:
             data_dict[fips_code] = {}  # Create entry if missing
         
-        # Add all columns except the first two (County Name, State)
-        for key in list(row.keys())[2:]:  # Skipping first two columns
+        # Only grab the specified columns
+        for idx in columns_to_grab:
+            key = list(row.keys())[idx]  # Get the column name
             try:
                 data_dict[fips_code][key] = float(row[key])  # Convert to float if possible
             except ValueError:
