@@ -44,7 +44,7 @@ for feature in geojson_data["features"]:
         feature["properties"].update(data_dict[geoid])
 
         # Remove specific unwanted properties
-        keys_to_remove = ["STATEFP", "COUNTYFP", "COUNTYNS", "AFFGEOID"]
+        keys_to_remove = ["STATEFP", "COUNTYFP", "COUNTYNS", "AFFGEOID","GEOID","LSAD","ALAND","AWATER"]
         for key in keys_to_remove:
             if key in feature["properties"]:
                 del feature["properties"][key]
