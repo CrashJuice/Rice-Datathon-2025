@@ -84,7 +84,7 @@
             });
         }
 
-        get("/us_counties_DATA.geojson")
+        fetch("/us_counties_DATA.geojson")
         .then(response => response.json())
         .then(data => {
             geojsonData = data;
