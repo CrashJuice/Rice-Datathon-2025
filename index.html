@@ -9,12 +9,25 @@
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
     <style>
         #map { height: 90vh; width: 100vw; background-color: white; }
-        #controls { position: absolute; top: 10px; left: 10px; z-index: 1000; background: white; padding: 5px; border-radius: 5px; }
+        #controls { 
+            position: absolute; 
+            top: 10px; 
+            right: 10px;  /* Move it to the right */
+            z-index: 1000; 
+            background: rgb(125, 124, 124); 
+            padding: 5px;  /* Add more padding for spacing */
+            border-radius: 5px; 
+            font-size: 16px;  /* Increase font size */
+        }
+        #dataSelect {
+            width: 200px;  /* Increase the width of the dropdown */
+            font-size: 18px;  /* Increase font size of dropdown */
+        }
     </style>
 </head>
 <body>
     <div id="controls">
-        <label for="dataSelect">Select Data otravez:</label>
+        <label for="dataSelect">Select Data:</label>
         <select id="dataSelect"></select>
     </div>
     <div id="map"></div>
@@ -30,18 +43,27 @@
         let currentMetric = "Avg_LILATracts";
         
         const allowedMetrics = [
-    "Avg_LILATracts", "Adult_Diabetes", "PovertyRate", 
-    "Grocery_Per_Thousand", "Snap_Authorized_Stores_Count", "Fast_Food_Restaurants_PTH"
-];
+            "Avg_LILATracts", "Adult_Diabetes", "PovertyRate", 
+            "Grocery_Per_Thousand", "Snap_Authorized_Stores_Count", "Fast_Food_Restaurants_PTH"
+        ];
+
         function getColor(value, min, max) {
             if (value === null || value === undefined) return '#FFFFFF';
             let normalized = (value - min) / (max - min); 
             normalized = Math.max(0, Math.min(1, normalized));
-            normalized=Math.sqrt(normalized)
-            let red = 255;
-            let green = Math.round(255 - (255 * normalized));
-            let blue = Math.round(255 - (255 * normalized));
-            return `rgb(${red}, ${green}, ${blue})`;
+            if (currentMetric === "Avg_LILATracts") {
+        normalized = Math.sqrt(normalized);  // Square root for LILA
+    } else if ( currentMetric === "Adult_Diabetes") {
+        normalized = normalized * normalized;  // Square for Fast Food Restaurants or Diabetes
+    } else if (currentMetric === "Snap_Authorized_Stores_Count" || currentMetric === "Grocery_Per_Thousand"|| currentMetric === "Fast_Food_Restaurants_PTH") {
+        normalized = Math.sqrt(normalized);  // Cube root for Snap Stores or Grocery
+    }
+           // Convert value (0 to 1) into an RGB gradient from white to dark red
+           let red = Math.round(255 - (60) * normalized);  // White (255) to Dark Red (128)
+            let green = Math.round(255 - (255) * normalized);      // White (255) to 0
+            let blue = Math.round(255 - (255) * normalized);       // White (255) to 0
+
+            return `rgb(${red}, ${green}, ${blue})`; // Returns a smooth red gradient
         }
 
         function getMinMax(metric) {
@@ -50,18 +72,22 @@
         }
 
         function updateMap() {
-    let { min, max } = getMinMax(currentMetric);
-    geojsonLayer.setStyle(feature => ({
-        fillColor: getColor(feature.properties[currentMetric], min, max),
-        weight: 1, opacity: 1, color: 'white', dashArray: '3', fillOpacity: 0.7
-    }));
+            let { min, max } = getMinMax(currentMetric);
+            geojsonLayer.setStyle(feature => ({
+    fillColor: getColor(feature.properties[currentMetric], min, max),
+    weight: 1, 
+    opacity: 1, // Very low opacity for the outline
+    color: 'white', 
+    dashArray: '3', 
+    fillOpacity: 0.9 // Very low opacity for the fill color
+}));
 
-    // Update popups to reflect the new metric
-    geojsonLayer.eachLayer(layer => {
-        let feature = layer.feature;
-        layer.bindPopup(`<b>County:</b> ${feature.properties.NAME} <br> <b>${currentMetric}:</b> ${feature.properties[currentMetric]}`);
-    });
-}
+            // Update popups to reflect the new metric
+            geojsonLayer.eachLayer(layer => {
+                let feature = layer.feature;
+                layer.bindPopup(`<b>County:</b> ${feature.properties.NAME} <br> <b>${currentMetric}:</b> ${feature.properties[currentMetric]}`);
+            });
+        }
 
         function createDropdown() {
             let select = document.getElementById("dataSelect");
@@ -87,7 +113,7 @@
             geojsonLayer = L.geoJson(geojsonData, {
                 style: feature => ({
                     fillColor: getColor(feature.properties[currentMetric], min, max),
-                    weight: 1, opacity: 1, color: 'white', dashArray: '3', fillOpacity: 0.7
+                    weight: 1, opacity: 1, color: 'white', dashArray: '3', fillOpacity: .9
                 }),
                 onEachFeature: (feature, layer) => {
                     layer.bindPopup(`<b>County:</b> ${feature.properties.NAME} <br> <b>${currentMetric}:</b> ${feature.properties[currentMetric]}`);
