@@ -40,7 +40,14 @@ with open(geojson_file, "r", encoding="utf-8") as file:
 for feature in geojson_data["features"]:
     geoid = feature["properties"]["GEOID"]  # Get GEOID from GeoJSON
     if geoid in data_dict:
-        feature["properties"].update(data_dict[geoid])  # Merge all data into properties
+        # Merge all data into properties
+        feature["properties"].update(data_dict[geoid])
+
+        # Remove specific unwanted properties
+        keys_to_remove = ["STATEFP", "COUNTYFP", "COUNTYNS", "AFFGEOID"]
+        for key in keys_to_remove:
+            if key in feature["properties"]:
+                del feature["properties"][key]
 
 # Step 5: Save Updated GeoJSON
 with open(output_file, "w", encoding="utf-8") as file:
