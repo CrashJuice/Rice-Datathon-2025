@@ -35,20 +35,20 @@
             z-index: 1000;
         }
 
-        /* Key styles */
+        
         #key {
     position: absolute;
-    right: 10px; /* Moves the key to the right */
-    top: 50%; /* Centers it vertically */
-    transform: translateY(-50%); /* Ensures the key is exactly in the middle */
+    right: 10px; 
+    top: 50%; 
+    transform: translateY(-50%); 
     background-color: rgba(255, 255, 255, 0.8);
     padding: 15px;
     border-radius: 5px;
     font-size: 14px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
     z-index: 1000;
-    width: 300px; /* Set a fixed width */
-    word-wrap: break-word; /* Ensure text wraps within the fixed width */
+    width: 300px;
+    word-wrap: break-word;
 }
         
         #key h3 {
@@ -245,18 +245,18 @@
             // Display the hover info in a div
             document.getElementById("hoverInfo").innerHTML = info;
             // Apply the custom styles to the hover info
-            document.getElementById("hoverInfo").style.fontSize = "18px";  // Larger font size
-            document.getElementById("hoverInfo").style.padding = "15px";  // More padding
-            document.getElementById("hoverInfo").style.border = "3px solid #333";  // Add a border
-            document.getElementById("hoverInfo").style.borderRadius = "10px";  // Rounded corners
-            document.getElementById("hoverInfo").style.backgroundColor = "#f9f9f9";  // Background color
+            document.getElementById("hoverInfo").style.fontSize = "18px";  
+            document.getElementById("hoverInfo").style.padding = "15px";  
+            document.getElementById("hoverInfo").style.border = "3px solid #333";  
+            document.getElementById("hoverInfo").style.borderRadius = "10px"; 
+            document.getElementById("hoverInfo").style.backgroundColor = "#f9f9f9";  
         });
 
-        // Reset style and remove hover info when mouseout
+        
         layer.on("mouseout", function(e) {
-            geojsonLayer.resetStyle(e.target); // Just reset the highlight style without recalculating colors
-            document.getElementById("hoverInfo").innerHTML = ''; // Clear hover info
-            // Reset the hover info styling back to default
+            geojsonLayer.resetStyle(e.target); 
+            document.getElementById("hoverInfo").innerHTML = ''; 
+           
             document.getElementById("hoverInfo").style.fontSize = "";  
             document.getElementById("hoverInfo").style.padding = "";  
             document.getElementById("hoverInfo").style.border = "";  

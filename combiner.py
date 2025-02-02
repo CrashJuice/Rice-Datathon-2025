@@ -1,55 +1,55 @@
 import json
 import csv
 
-# File paths (update with actual paths)
-geojson_file = "counties.geojson"  # Your GeoJSON file
-lila_csv_file = "LILAavgFinal.csv"  # LILA data CSV
-combined_csv_file = "combineddatafinal.csv"  # Additional data CSV
-output_file = "us_counties_slim.geojson"  # Merged output file
 
-# Step 1: Load LILA Data into a Dictionary (FIPS -> Avg_LILATracts)
+geojson_file = "counties.geojson"  
+lila_csv_file = "LILAavgFinal.csv"  
+combined_csv_file = "combineddatafinal.csv"  
+output_file = "us_counties_slim.geojson"  
+
+
 columns_to_grab = [9,21,25,24,28]
 data_dict = {}
 with open(lila_csv_file, mode="r", encoding="utf-8") as file:
     reader = csv.DictReader(file)
     for row in reader:
-        fips_code = row["FIPS"].zfill(5)  # Ensure 5-digit FIPS
-        data_dict[fips_code] = {"Avg_LILATracts": float(row["Avg_LILATracts"])}  # Convert to float
+        fips_code = row["FIPS"].zfill(5)  
+        data_dict[fips_code] = {"Avg_LILATracts": float(row["Avg_LILATracts"])}  
 
-# Step 2: Load Additional Data from combineddata.csv
+
 with open(combined_csv_file, mode="r", encoding="utf-8") as file:
     reader = csv.DictReader(file)
     for row in reader:
-        fips_code = row["FIPS"].zfill(5)  # Ensure 5-digit FIPS
+        fips_code = row["FIPS"].zfill(5)  
         if fips_code not in data_dict:
-            data_dict[fips_code] = {}  # Create entry if missing
+            data_dict[fips_code] = {}  
         
-        # Only grab the specified columns
+        
         for idx in columns_to_grab:
-            key = list(row.keys())[idx]  # Get the column name
+            key = list(row.keys())[idx]  
             try:
-                data_dict[fips_code][key] = float(row[key])  # Convert to float if possible
+                data_dict[fips_code][key] = float(row[key])  
             except ValueError:
-                data_dict[fips_code][key] = row[key]  # Keep as string if conversion fails
+                data_dict[fips_code][key] = row[key]  
 
-# Step 3: Load GeoJSON File
+
 with open(geojson_file, "r", encoding="utf-8") as file:
     geojson_data = json.load(file)
 
-# Step 4: Merge Data into GeoJSON
+
 for feature in geojson_data["features"]:
-    geoid = feature["properties"]["GEOID"]  # Get GEOID from GeoJSON
+    geoid = feature["properties"]["GEOID"]  
     if geoid in data_dict:
-        # Merge all data into properties
+        
         feature["properties"].update(data_dict[geoid])
 
-        # Remove specific unwanted properties
+        
         keys_to_remove = ["STATEFP", "COUNTYFP", "COUNTYNS", "AFFGEOID","GEOID","LSAD","ALAND","AWATER"]
         for key in keys_to_remove:
             if key in feature["properties"]:
                 del feature["properties"][key]
 
-# Step 5: Save Updated GeoJSON
+
 with open(output_file, "w", encoding="utf-8") as file:
     json.dump(geojson_data, file, indent=4)
 
