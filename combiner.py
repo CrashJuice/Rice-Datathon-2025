@@ -3,28 +3,45 @@ import csv
 
 # File paths (update with actual paths)
 geojson_file = "counties.geojson"  # Your GeoJSON file
-csv_file = "LILAavg.csv"  # Your CSV file
-output_file = "us_counties_LILA.geojson"  # Merged output file
+lila_csv_file = "LILAavgFinal.csv"  # LILA data CSV
+combined_csv_file = "combineddatafinal.csv"  # Additional data CSV
+output_file = "us_counties_DATA.geojson"  # Merged output file
 
-# Step 1: Load CSV Data into a Dictionary (FIPS -> Avg_LILATracts)
+# Step 1: Load LILA Data into a Dictionary (FIPS -> Avg_LILATracts)
 data_dict = {}
-with open(csv_file, mode="r", encoding="utf-8") as file:
+with open(lila_csv_file, mode="r", encoding="utf-8") as file:
     reader = csv.DictReader(file)
     for row in reader:
-        fips_code = row["FIPS"].zfill(5)  
-        data_dict[fips_code] = float(row["Avg_LILATracts"])  # Convert to float
+        fips_code = row["FIPS"].zfill(5)  # Ensure 5-digit FIPS
+        data_dict[fips_code] = {"Avg_LILATracts": float(row["Avg_LILATracts"])}  # Convert to float
 
-# Step 2: Load GeoJSON File
+# Step 2: Load Additional Data from combineddata.csv
+with open(combined_csv_file, mode="r", encoding="utf-8") as file:
+    reader = csv.DictReader(file)
+    for row in reader:
+        fips_code = row["FIPS"].zfill(5)  # Ensure 5-digit FIPS
+        if fips_code not in data_dict:
+            data_dict[fips_code] = {}  # Create entry if missing
+        
+        # Add all columns except the first two (County Name, State)
+        for key in list(row.keys())[2:]:  # Skipping first two columns
+            try:
+                data_dict[fips_code][key] = float(row[key])  # Convert to float if possible
+            except ValueError:
+                data_dict[fips_code][key] = row[key]  # Keep as string if conversion fails
+
+# Step 3: Load GeoJSON File
 with open(geojson_file, "r", encoding="utf-8") as file:
     geojson_data = json.load(file)
 
-# Step 3: Merge Data into GeoJSON
+# Step 4: Merge Data into GeoJSON
 for feature in geojson_data["features"]:
     geoid = feature["properties"]["GEOID"]  # Get GEOID from GeoJSON
-    feature["properties"]["Avg_LILATracts"] = data_dict.get(geoid, None)  # Assign data or None if missing
+    if geoid in data_dict:
+        feature["properties"].update(data_dict[geoid])  # Merge all data into properties
 
-# Step 4: Save Updated GeoJSON
+# Step 5: Save Updated GeoJSON
 with open(output_file, "w", encoding="utf-8") as file:
     json.dump(geojson_data, file, indent=4)
 
-print(" Merging complete Saved as:", output_file)
+print("Merging complete. Saved as:", output_file)

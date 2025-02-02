@@ -7,91 +7,101 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
     <style>
-        #map { height: 90vh; width: 100vw; background-color: rgb(179, 189, 185);}
-        
+        #map { height: 90vh; width: 100vw; background-color: white; }
+        #controls { position: absolute; top: 10px; left: 10px; z-index: 1000; background: white; padding: 5px; border-radius: 5px; }
     </style>
 </head>
 <body>
-
+    <div id="controls">
+        <label for="dataSelect">Select Data:</label>
+        <select id="dataSelect"></select>
+    </div>
     <div id="map"></div>
-
+    
     <script>
-        // Initialize the map
-        var map = L.map('map').setView([37.8, -96], 4);  // Centered on the US
-        
-        // Add a tile layer (Basemap)
+        var map = L.map('map').setView([37.8, -96], 4);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
            attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
-        // Function to create a smooth color gradient from white to any color
-        function getColor(value) {
-            if (value === null || value === undefined) return '#FFFFFF'; // Default to white for missing values
-
-            // Ensure value is clamped between 0 and 1
-            value = Math.max(0, Math.min(1, value));
-            value = Math.sqrt(value); // This makes lower values more distinguishable
-
-                // Convert value (0 to 1) into an RGB gradient from white to bright red
-            let red = 255;  // Always fully red
-            let green = Math.round(255 - (255 * value)); // White (255) to 0
-            let blue = Math.round(255 - (255 * value));  // White (255) to 0
-
-            return `rgb(${red}, ${green}, ${blue})`; // Returns a smooth red gradient
+        let geojsonLayer;
+        let geojsonData;
+        let currentMetric = "Avg_LILATracts";
+        
+        const allowedMetrics = [
+    "Avg_LILATracts", "LowIncome_LowAccess", "NoCar_LowAccess", "Snap_Participation", 
+    "FreeLunch_Participation", "WIC_Participation", "FoodBanks_Count", "Adult_Diabetes", 
+    "Adult_Obesity", "Recreation_Facility_Count", "White_Pct", "Hispanic_Pct", 
+    "Black_Pct", "Asian_Pct", "NativeAmerican_Pct", "PacificIslander_Pct", 
+    "65_Older_Pct", "18_Younger_Pct", "MedianHouseholdIncome", "PovertyRate", 
+    "PopulationLoss", "FoodInsecurity", "Grocery_Per_Thousand", "Snap_Authorized_Stores_Count", 
+    "WIC_Authorized_Stores_Count", "Food_Sales_Tax", "Fast_Food_Restaurants_PTH", 
+    "Fast_Food_Expenditures_Per_Capita"
+];
+        function getColor(value, min, max) {
+            if (value === null || value === undefined) return '#FFFFFF';
+            let normalized = (value - min) / (max - min); 
+            normalized = Math.max(0, Math.min(1, normalized));
+            normalized=Math.sqrt(normalized)
+            let red = 255;
+            let green = Math.round(255 - (255 * normalized));
+            let blue = Math.round(255 - (255 * normalized));
+            return `rgb(${red}, ${green}, ${blue})`;
         }
 
-        // Load the GeoJSON file
-        fetch("us_counties_LILA.geojson")  
+        function getMinMax(metric) {
+            let values = geojsonData.features.map(f => f.properties[metric]).filter(v => v !== null && v !== undefined);
+            return { min: Math.min(...values), max: Math.max(...values) };
+        }
+
+        function updateMap() {
+    let { min, max } = getMinMax(currentMetric);
+    geojsonLayer.setStyle(feature => ({
+        fillColor: getColor(feature.properties[currentMetric], min, max),
+        weight: 1, opacity: 1, color: 'white', dashArray: '3', fillOpacity: 0.7
+    }));
+
+    // Update popups to reflect the new metric
+    geojsonLayer.eachLayer(layer => {
+        let feature = layer.feature;
+        layer.bindPopup(`<b>County:</b> ${feature.properties.NAME} <br> <b>${currentMetric}:</b> ${feature.properties[currentMetric]}`);
+    });
+}
+
+        function createDropdown() {
+            let select = document.getElementById("dataSelect");
+            allowedMetrics.forEach(prop => {
+                let option = document.createElement("option");
+                option.value = prop;
+                option.textContent = prop;
+                select.appendChild(option);
+            });
+            select.value = currentMetric;
+            select.addEventListener("change", function() {
+                currentMetric = this.value;
+                updateMap();
+            });
+        }
+
+        fetch("us_counties_DATA.geojson")
         .then(response => response.json())
         .then(data => {
-            
-            // Style function
-            function style(feature) {
-                return {
-                    fillColor: getColor(feature.properties.Avg_LILATracts),
-                    weight: 1,
-                    opacity: 1,
-                    color: 'white',
-                    dashArray: '3',
-                    fillOpacity: 0.7
-                };
-            }
+            geojsonData = data;
+            let { min, max } = getMinMax(currentMetric);
 
-            // Hover effect
-            function highlightFeature(e) {
-                var layer = e.target;
-                layer.setStyle({
-                    weight: 3,
-                    color: '#666',
-                    dashArray: '',
-                    fillOpacity: 0.9
-                });
-                layer.bringToFront();
-            }
-
-            function resetHighlight(e) {
-                geojsonLayer.resetStyle(e.target);
-            }
-
-            // Click to show popup
-            function onEachFeature(feature, layer) {
-                layer.on({
-                    mouseover: highlightFeature,
-                    mouseout: resetHighlight
-                });
-                layer.bindPopup(`<b>County:</b> ${feature.properties.NAME} <br> 
-                                 <b>Avg_LILATracts:</b> ${feature.properties.Avg_LILATracts}`);
-            }
-
-            // Add GeoJSON layer
-            var geojsonLayer = L.geoJson(data, {
-                style: style,
-                onEachFeature: onEachFeature
+            geojsonLayer = L.geoJson(geojsonData, {
+                style: feature => ({
+                    fillColor: getColor(feature.properties[currentMetric], min, max),
+                    weight: 1, opacity: 1, color: 'white', dashArray: '3', fillOpacity: 0.7
+                }),
+                onEachFeature: (feature, layer) => {
+                    layer.bindPopup(`<b>County:</b> ${feature.properties.NAME} <br> <b>${currentMetric}:</b> ${feature.properties[currentMetric]}`);
+                }
             }).addTo(map);
-
+            
+            createDropdown();
         })
         .catch(error => console.error("Error loading GeoJSON:", error));
-
     </script>
 </body>
 </html>
