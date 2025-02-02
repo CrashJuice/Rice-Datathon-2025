@@ -30,14 +30,8 @@
         let currentMetric = "Avg_LILATracts";
         
         const allowedMetrics = [
-    "Avg_LILATracts", "LowIncome_LowAccess", "NoCar_LowAccess", "Snap_Participation", 
-    "FreeLunch_Participation", "WIC_Participation", "FoodBanks_Count", "Adult_Diabetes", 
-    "Adult_Obesity", "Recreation_Facility_Count", "White_Pct", "Hispanic_Pct", 
-    "Black_Pct", "Asian_Pct", "NativeAmerican_Pct", "PacificIslander_Pct", 
-    "65_Older_Pct", "18_Younger_Pct", "MedianHouseholdIncome", "PovertyRate", 
-    "PopulationLoss", "FoodInsecurity", "Grocery_Per_Thousand", "Snap_Authorized_Stores_Count", 
-    "WIC_Authorized_Stores_Count", "Food_Sales_Tax", "Fast_Food_Restaurants_PTH", 
-    "Fast_Food_Expenditures_Per_Capita"
+    "Avg_LILATracts", "FreeLunch_Participation", "Adult_Diabetes", "65_Older_Pct", "18_Younger_Pct", "MedianHouseholdIncome", "PovertyRate", 
+    "Grocery_Per_Thousand", "Snap_Authorized_Stores_Count", "Fast_Food_Restaurants_PTH"
 ];
         function getColor(value, min, max) {
             if (value === null || value === undefined) return '#FFFFFF';
@@ -84,7 +78,7 @@
             });
         }
 
-        fetch("us_counties_DATA.geojson")
+        fetch("us_counties_slim.geojson")
         .then(response => response.json())
         .then(data => {
             geojsonData = data;
