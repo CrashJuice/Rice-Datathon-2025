@@ -84,7 +84,7 @@
                 updateMap();
             });
         }
-        fetch("us_counties_DATA.topojson")
+        fetch("us_counties_DATA.geojson")
   .then(response => response.json())
   .then(data => {
     // Convert TopoJSON to GeoJSON
