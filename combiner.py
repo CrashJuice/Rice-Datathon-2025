@@ -8,7 +8,7 @@ combined_csv_file = "combineddatafinal.csv"  # Additional data CSV
 output_file = "us_counties_slim.geojson"  # Merged output file
 
 # Step 1: Load LILA Data into a Dictionary (FIPS -> Avg_LILATracts)
-columns_to_grab = [3, 4, 5, 9, 11, 12, 13, 14, 15, 16, 19, 20, 21, 23, 26, 28]
+columns_to_grab = [4,5,6,10,19,20,21,22,24,25,27,29]
 data_dict = {}
 with open(lila_csv_file, mode="r", encoding="utf-8") as file:
     reader = csv.DictReader(file)
