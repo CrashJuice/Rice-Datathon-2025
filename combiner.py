@@ -5,7 +5,7 @@ import csv
 geojson_file = "counties.geojson"  # Your GeoJSON file
 lila_csv_file = "LILAavgFinal.csv"  # LILA data CSV
 combined_csv_file = "combineddatafinal.csv"  # Additional data CSV
-output_file = "us_counties_DATA.geojson"  # Merged output file
+output_file = "us_counties_slim.geojson"  # Merged output file
 
 # Step 1: Load LILA Data into a Dictionary (FIPS -> Avg_LILATracts)
 data_dict = {}
@@ -15,20 +15,7 @@ with open(lila_csv_file, mode="r", encoding="utf-8") as file:
         fips_code = row["FIPS"].zfill(5)  # Ensure 5-digit FIPS
         data_dict[fips_code] = {"Avg_LILATracts": float(row["Avg_LILATracts"])}  # Convert to float
 
-# Step 2: Load Additional Data from combineddata.csv
-with open(combined_csv_file, mode="r", encoding="utf-8") as file:
-    reader = csv.DictReader(file)
-    for row in reader:
-        fips_code = row["FIPS"].zfill(5)  # Ensure 5-digit FIPS
-        if fips_code not in data_dict:
-            data_dict[fips_code] = {}  # Create entry if missing
-        
-        # Add all columns except the first two (County Name, State)
-        for key in list(row.keys())[2:]:  # Skipping first two columns
-            try:
-                data_dict[fips_code][key] = float(row[key])  # Convert to float if possible
-            except ValueError:
-                data_dict[fips_code][key] = row[key]  # Keep as string if conversion fails
+
 
 # Step 3: Load GeoJSON File
 with open(geojson_file, "r", encoding="utf-8") as file:
