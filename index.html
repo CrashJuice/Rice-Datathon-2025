@@ -7,7 +7,6 @@
     <title>US Counties Map</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js"></script> <!-- Add TopoJSON client -->
     <style>
         #map { height: 90vh; width: 100vw; background-color: white; }
         #controls { position: absolute; top: 10px; left: 10px; z-index: 1000; background: white; padding: 5px; border-radius: 5px; }
@@ -31,16 +30,15 @@
         let currentMetric = "Avg_LILATracts";
         
         const allowedMetrics = [
-            "Avg_LILATracts", "LowIncome_LowAccess", "NoCar_LowAccess", "Snap_Participation", 
-            "FreeLunch_Participation", "WIC_Participation", "FoodBanks_Count", "Adult_Diabetes", 
-            "Adult_Obesity", "Recreation_Facility_Count", "White_Pct", "Hispanic_Pct", 
-            "Black_Pct", "Asian_Pct", "NativeAmerican_Pct", "PacificIslander_Pct", 
-            "65_Older_Pct", "18_Younger_Pct", "MedianHouseholdIncome", "PovertyRate", 
-            "PopulationLoss", "FoodInsecurity", "Grocery_Per_Thousand", "Snap_Authorized_Stores_Count", 
-            "WIC_Authorized_Stores_Count", "Food_Sales_Tax", "Fast_Food_Restaurants_PTH", 
-            "Fast_Food_Expenditures_Per_Capita"
-        ];
-
+    "Avg_LILATracts", "LowIncome_LowAccess", "NoCar_LowAccess", "Snap_Participation", 
+    "FreeLunch_Participation", "WIC_Participation", "FoodBanks_Count", "Adult_Diabetes", 
+    "Adult_Obesity", "Recreation_Facility_Count", "White_Pct", "Hispanic_Pct", 
+    "Black_Pct", "Asian_Pct", "NativeAmerican_Pct", "PacificIslander_Pct", 
+    "65_Older_Pct", "18_Younger_Pct", "MedianHouseholdIncome", "PovertyRate", 
+    "PopulationLoss", "FoodInsecurity", "Grocery_Per_Thousand", "Snap_Authorized_Stores_Count", 
+    "WIC_Authorized_Stores_Count", "Food_Sales_Tax", "Fast_Food_Restaurants_PTH", 
+    "Fast_Food_Expenditures_Per_Capita"
+];
         function getColor(value, min, max) {
             if (value === null || value === undefined) return '#FFFFFF';
             let normalized = (value - min) / (max - min); 
@@ -58,18 +56,18 @@
         }
 
         function updateMap() {
-            let { min, max } = getMinMax(currentMetric);
-            geojsonLayer.setStyle(feature => ({
-                fillColor: getColor(feature.properties[currentMetric], min, max),
-                weight: 1, opacity: 1, color: 'white', dashArray: '3', fillOpacity: 0.7
-            }));
+    let { min, max } = getMinMax(currentMetric);
+    geojsonLayer.setStyle(feature => ({
+        fillColor: getColor(feature.properties[currentMetric], min, max),
+        weight: 1, opacity: 1, color: 'white', dashArray: '3', fillOpacity: 0.7
+    }));
 
-            // Update popups to reflect the new metric
-            geojsonLayer.eachLayer(layer => {
-                let feature = layer.feature;
-                layer.bindPopup(`<b>County:</b> ${feature.properties.NAME} <br> <b>${currentMetric}:</b> ${feature.properties[currentMetric]}`);
-            });
-        }
+    // Update popups to reflect the new metric
+    geojsonLayer.eachLayer(layer => {
+        let feature = layer.feature;
+        layer.bindPopup(`<b>County:</b> ${feature.properties.NAME} <br> <b>${currentMetric}:</b> ${feature.properties[currentMetric]}`);
+    });
+}
 
         function createDropdown() {
             let select = document.getElementById("dataSelect");
@@ -89,9 +87,7 @@
         fetch("us_counties_DATA.topojson")
         .then(response => response.json())
         .then(data => {
-            // Convert TopoJSON to GeoJSON
-            geojsonData = topojson.feature(data, data.objects.counties); // Assuming 'counties' is the TopoJSON object name
-            
+            geojsonData = data;
             let { min, max } = getMinMax(currentMetric);
 
             geojsonLayer = L.geoJson(geojsonData, {
@@ -106,7 +102,7 @@
             
             createDropdown();
         })
-        .catch(error => console.error("Error loading TopoJSON:", error));
+        .catch(error => console.error("Error loading GeoJSON:", error));
     </script>
 </body>
 </html>
